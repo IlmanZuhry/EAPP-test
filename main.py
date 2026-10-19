@@ -2,82 +2,101 @@ import eel
 import pandas as pd
 import os
 
-eel.init('web')
-@eel.expose
+eel.init("web")
+
+DATA_PATH = os.path.join("web", "osn.csv")
+
+
 def ambil_data_osn():
-    try : 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        file_csv = os.path.join(base_dir, 'web', 'osn.csv')
-        if not os.path.exists(file_csv):
-            return {
-                "success": False,
-                "message": "File CSV tidak ditemukan."
-            }
-
-        df = pd.read_csv(file_csv)
-        df.columns = [
-            kolom.strip() for kolom in df.columns
-        ]
-        print("Kolom CSV:")
-        print(df.columns.tolist())
-
-        jumlah_peserta = len(df)
-        jumlah_laki = len(df[df["Gender"] == "L"])
-        jumlah_perempuan = len(df[df["Gender"] == "P"])
-
-        jumlah_emas =  len(df[df["Medali"] == "Emas"])
-        jumlah_perak = len(df[df["Medali"] == "Perak"])
-        jumlah_perunggu = len(df[df["Medali"] == "Perunggu"])
-
-        bidang = (df["Bidang"].value_counts().head(10))
-        tahun = (df["Tahun"].value_counts().sort_index())
-
-        data_peserta = df[
-            [
-                "No",
-                "Nama Peserta",
-                "Gender",
-                "Sekolah",
-                "Provinsi",
-                "Bidang",
-                "Medali",
-                "Tahun"
-            ]
-        ].head(20)
-
-        data_peserta = (data_peserta.fillna("").to_dict(orient="records"))
-
-        data_bidang = {
-            "labels": bidang.index.tolist(),
-            "values": bidang.values.tolist()
-        }
-
-        data_tahun ={
-            "labels":[
-                str(t)
-                for t in tahun.index.tolist()
-            ],
-            "values": tahun.values.tolist()
-        }
-
-        return{
-            "success": True,
-            "jumlah" : jumlah_peserta,
-            "laki" : jumlah_laki,
-            "perempuan" : jumlah_perempuan,
-            "emas" : jumlah_emas,
-            "perak" : jumlah_perak,
-            "perunggu" : jumlah_perunggu,
-            "data" : data_peserta,
-            "bidang" : data_bidang,
-            "tahun" : data_tahun
-        }
-
-    except Exception as e:
-        print("ERROR :", e)
-        return{
+    """Membaca dataset dan menghasilkan data untuk dashboard."""
+    try:
+        df = pd.read_csv(DATA_PATH)
+    except FileNotFoundError:
+        return {
             "success": False,
-            "message": str(e)
+            "message": f"File dataset tidak ditemukan: {DATA_PATH}",
+            "data": [],
+            "statistik": {},
+            "analisis": {}
         }
 
-eel.start('index.html', size=(1100, 750))
+    # Rapikan nama kolom dan nilai kosong tanpa mengubah file sumber.
+    df.columns = [str(col).strip() for col in df.columns]
+    df = df.fillna("")
+
+    records = df.to_dict(orient="records")
+    columns = list(df.columns)
+
+    def find_col(candidates):
+        lowered = {str(c).strip().lower(): c for c in columns}
+        for candidate in candidates:
+            if candidate.lower() in lowered:
+                return lowered[candidate.lower()]
+        for col in columns:
+            low = str(col).lower()
+            if any(candidate.lower() in low for candidate in candidates):
+                return col
+        return None
+
+    name_col = find_col(["nama", "name", "peserta"])
+    field_col = find_col(["bidang", "cabang", "field", "kategori"])
+    year_col = find_col(["tahun", "year"])
+    medal_col = find_col(["medali", "medal", "penghargaan"])
+    province_col = find_col(["provinsi", "province"])
+    gender_col = find_col(["jenis kelamin", "gender", "kelamin"])
+
+    def counts(col):
+        if not col:
+            return {}
+        values = df[col].astype(str).str.strip()
+        values = values[values != ""]
+        return {str(k): int(v) for k, v in values.value_counts().items()}
+
+    medali_counts = counts(medal_col)
+    bidang_counts = counts(field_col)
+    tahun_counts = counts(year_col)
+    provinsi_counts = counts(province_col)
+    gender_counts = counts(gender_col)
+
+    total = len(df)
+    emas = sum(v for k, v in medali_counts.items() if "emas" in k.lower() or "gold" in k.lower())
+    perak = sum(v for k, v in medali_counts.items() if "perak" in k.lower() or "silver" in k.lower())
+    perunggu = sum(v for k, v in medali_counts.items() if "perunggu" in k.lower() or "bronze" in k.lower())
+
+    return {
+        "success": True,
+        "message": "Dataset berhasil dimuat.",
+        "data": records,
+        "columns": columns,
+        "statistik": {
+            "total_peserta": total,
+            "total_bidang": len(bidang_counts),
+            "total_tahun": len(tahun_counts),
+            "total_provinsi": len(provinsi_counts),
+            "emas": emas,
+            "perak": perak,
+            "perunggu": perunggu,
+            "medali": medali_counts,
+            "bidang": bidang_counts,
+            "tahun": tahun_counts,
+            "provinsi": provinsi_counts,
+            "gender": gender_counts,
+        },
+        "analisis": {
+            "kolom_nama": name_col,
+            "kolom_bidang": field_col,
+            "kolom_tahun": year_col,
+            "kolom_medali": medal_col,
+            "kolom_provinsi": province_col,
+            "kolom_gender": gender_col,
+        }
+    }
+
+
+@eel.expose
+def ambil_data():
+    """Dipanggil frontend untuk memuat dataset lengkap."""
+    return ambil_data_osn()
+
+
+eel.start("index.html", size=(1360, 860))
