@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSN Data Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🏆</div>
+                <div>
+                    <h2>OSN</h2>
+                    <span>Data Dashboard</span>
+                </div>
+            </div>
+            <nav>
+                <div class="menu active"><span>⌂</span>Dashboard</div>
+                <div class="menu"><span>👥</span>Data Peserta</div>
+                <div class="menu"><span>▥</span>Analisis</div>
+                <div class="menu"><span>⚙</span>Pengaturan</div>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="graduation">🎓</div>
+                <p>"Prestasi hari ini, untuk masa depan yang lebih baik"</p>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="top-header">
+                <div class="welcome">
+                    <div class="hello">👋</div>
+                    <div>
+                        <h1>Selamat datang!</h1>
+                        <p>Dashboard Data Peserta Olimpiade Sains Nasional (OSN)</p>
+                    </div>
+                </div>
+
+                <button class="load-btn" onclick="loadData()">⟳ &nbsp; Muat Data</button>
+            </header>
+
+            <section class="stats">
+                <div class="stat-card purple">
+                    <div class="stat-icon">👥</div>
+                    <div><span>Total Peserta</span><strong id="jumlahPeserta">-</strong></div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">👨</div>
+                    <div><span>Laki-laki</span><strong id="jumlahLaki">-</strong></div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-icon">👩</div>
+                    <div><span>Perempuan</span><strong id="jumlahPerempuan">-</strong></div>
+                </div>
+                <div class="stat-card gold">
+                    <div class="stat-icon">🥇</div>
+                    <div><span>Medali Emas</span><strong id="jumlahEmas">-</strong></div>
+                </div>
+            </section>
+
+            <section class="charts-grid">
+                <div class="content-card">
+                    <div class="section-heading">
+                        <div class="section-icon">📊</div>
+                        <div>
+                            <h2>Top 10 Bidang Lomba</h2>
+                            <p>Jumlah peserta berdasarkan bidang</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartBidang"></canvas>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="section-heading">
+                        <div class="section-icon">📈</div>
+                        <div>
+                            <h2>Tren Pertumbuhan Peserta</h2>
+                            <p>Distribusi jumlah peserta per tahun</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartTahun"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="section-heading">
+                    <div class="section-icon">🏆</div>
+                    <div>
+                        <h2>Perolehan Medali</h2>
+                        <p>Jumlah medali peserta OSN</p>
+                    </div>
+                </div>
+
+                <div class="medals">
+                    <div class="medal-card gold-medal">
+                        <div class="medal-icon">🥇</div>
+                        <div><span>Gold</span><strong id="emas">-</strong></div>
+                    </div>
+                    <div class="medal-card silver-medal">
+                        <div class="medal-icon">🥈</div>
+                        <div><span>Silver</span><strong id="perak">-</strong></div>
+                    </div>
+                    <div class="medal-card bronze-medal">
+                        <div class="medal-icon">🥉</div>
+                        <div><span>Bronze</span><strong id="perunggu">-</strong></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-card table-card">
+                <div class="table-title">
+                    <div class="section-heading">
+                        <div class="section-icon">📋</div>
+                        <div>
+                            <h2>Data Peserta OSN</h2>
+                            <p>Menampilkan 20 data pertama dari dataset</p>
+                        </div>
+                    </div>
+                    <div class="search-box">🔍
+                        <input type="text" placeholder="Cari nama peserta..." id="searchInput" onkeyup="searchTable()">
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Peserta</th>
+                                <th>Gender</th>
+                                <th>Sekolah</th>
+                                <th>Provinsi</th>
+                                <th>Bidang</th>
+                                <th>Medali</th>
+                                <th>Tahun</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelPeserta">
+                            <tr>
+                                <td colspan="8" class="empty">Klik "Muat Data" untuk menampilkan data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/eel.js"></script>
+    <script src="script.js"></script>
+    <script>
+        function searchTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#tabelPeserta tr");
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+    </script>
+</body>
+</html>
